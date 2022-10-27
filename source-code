@@ -1,0 +1,135 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.Sql;
+using System.Data.SqlClient;
+using System.Net;
+using System.Net.Mail;
+
+namespace YasamEczanesi
+{
+    public partial class Form1 : Form
+    {
+        SqlConnection baglanti = new SqlConnection("Data Source = MSI; Initial Catalog = YasamEczanesi; Integrated Security = True");
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void girisButton_Click(object sender, EventArgs e)
+        {
+            string yetkiliNumarasi = yetkiliNumarasiTextBox.Text;
+            string sifre = sifreTextBox.Text;
+            bool kayitli_mi = false;
+
+            baglanti.Open();
+            SqlCommand komut = new SqlCommand("SELECT * FROM yetkiliListesi", baglanti);
+            SqlDataReader veriOku = komut.ExecuteReader();
+
+ 
+            while (veriOku.Read())
+            {
+                if (yetkiliNumarasi == veriOku["yetkiliNumarasi"].ToString() && sifre == veriOku["sifre"].ToString())
+                    kayitli_mi = true;
+                else
+                    kayitli_mi = false;
+            }
+
+            baglanti.Close();
+
+                if (kayitli_mi == true)
+                    MessageBox.Show("GİRİŞ BAŞARILI!");
+                else
+                    MessageBox.Show("YETKİLİ BULUNAMADI...\nGİRİŞ BAŞARISIZ!");
+            
+
+        }
+
+        private void yetkiliGirisPaneliLabel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void beniHatirlaCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void yetkiliNumarasiLabel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void sifreLabel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void sifremiUnuttumLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string eposta;
+
+            baglanti.Open();
+            SqlCommand komut = new SqlCommand("SELECT * FROM yetkiliListesi WHERE eposta", baglanti);
+            SqlDataReader veriOku = komut.ExecuteReader();
+
+            while (veriOku.Read())
+            {
+                try 
+                {
+                    if (baglanti.State == ConnectionState.Closed)
+                    {
+                        baglanti.Open();
+                    }
+                    SmtpClient smtpServer = new SmtpClient();
+                    MailMessage mail = new MailMessage();
+                    String tarih = DateTime.Now.ToLongDateString();
+                    String mailAdresi = ("otomasyonnn@hotmail.com");
+                    String mailSifre = ("Otomasyon123!");
+                    String smtpSrvr = "smtp.office365.com";
+                    String kime = (veriOku["eposta"].ToString());
+                    String konu = ("Şifre Hatırlatma Maili");
+                    String icerik = ("Sayın " + veriOku["yetkiliNumarasi"] + " numaralı yetkili,\nBizden " + tarih + "tarihinde şifre hatırlatma talebinde bulundunuz. " +
+                                  "Şifreniz: " + veriOku["sifre"].ToString());
+                    smtpServer.Credentials = new NetworkCredential(mailAdresi, mailSifre);
+                    smtpServer.Port = 995;
+                    smtpServer.Host = smtpSrvr;
+                    smtpServer.EnableSsl = true;
+                    mail.From = new MailAddress(mailAdresi);
+                    mail.To.Add(kime);
+                    mail.Subject = konu;
+                    mail.Body = icerik;
+                    smtpServer.Send(mail);
+                    DialogResult bilgi = new DialogResult();
+                    bilgi = MessageBox.Show("Mail gönderilmiştir...");
+                    this.Hide();
+                }
+                catch (Exception hata)
+                {
+                    MessageBox.Show("Mail gçnderilemedi!", hata.Message);
+                }
+            }
+        }
+
+        private void yetkiliNumarasiTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void sifreTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
